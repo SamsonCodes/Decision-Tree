@@ -11,8 +11,6 @@ dataset_url = 'http://mlr.cs.umass.edu/ml/machine-learning-databases/wine-qualit
 data = pd.read_csv(dataset_url, sep=';')
 raw_data = data.values
 
-
-
 def getRanges(dataSet):
     range_min = []
     range_max = []
@@ -27,22 +25,24 @@ def getRanges(dataSet):
     return [range_min, range_max]
 
 def printDataStats(dataSet):    
-    print(data.columns)
+    #print(data.columns)
     print("len(dataSet) =",len(dataSet))
-    print("len(dataSet)[0] =",len(dataSet[0]))
+    #print("len(dataSet)[0] =",len(dataSet[0]))
+    """
     ranges = getRanges(dataSet)
     range_min = ranges[0]
     range_max = ranges[1]
     for x in range(0,len(range_min)):
         print("feature",x, ", min=","{:.2f}".format(range_min[x]), ", max=","{:.2f}".format(range_max[x]))
     #print(dataSet)
-    """
+   
     for x in range(0,10):
         for y in range(0, len(dataSet[0])):
             print("{:.2f}".format(dataSet[x][y]), ", ", end="")
         print("\n")
-        """
-    print("\n")
+        
+    """
+    #print("\n")
 
 class Tree:
     def __init__(self):
@@ -54,9 +54,13 @@ class Tree:
         parentNode = Node(index, self.depth, raw_data)  
         index+=1        
         self.nodes.append(parentNode)
-        while(self.depth < maxDepth):
+        splitsLeft = True
+        while(self.depth < maxDepth and splitsLeft):
+            #print("self.depth=",self.depth, "len(self.nodes)=",len(self.nodes))
+            splitsLeft = False
             for x in range(0, len(self.nodes)):
-                if(self.nodes[x].layer == self.depth):
+                #print("x=",x,",len(self.nodes[x].dataSet)=",len(self.nodes[x].dataSet))
+                if((self.nodes[x].layer == self.depth) and (len(self.nodes[x].dataSet) > 1)):
                     subsets = getSubsets(self.nodes[x].dataSet, self.nodes[x].feature, self.nodes[x].value)
                     child1 = Node(index, self.depth+1, subsets[0])
                     index+=1
@@ -64,6 +68,7 @@ class Tree:
                     index+=1
                     self.nodes.append(child1)
                     self.nodes.append(child2)
+                    splitsLeft = True
             self.depth+=1        
     def printTree(self):        
         for layer in range(1, self.depth + 1):
@@ -85,13 +90,19 @@ class Node:
         self.name = "Node" + str(index)
         self.layer = layer      
         self.dataSet = dataSet
-        
-        ranges = getRanges(dataSet)
+        printDataStats(self.dataSet)
+        ranges = getRanges(self.dataSet)
         range_min = ranges[0]
         range_max = ranges[1]
-        
-        splitFeature = random.randint(0,len(data.columns) - 1)
-        splitValue = random.uniform(range_min[splitFeature], range_max[splitFeature])
+        empty = True
+        while(empty):
+            splitFeature = random.randint(0,len(dataSet[0]) - 1)
+            splitValue = random.uniform(range_min[splitFeature], range_max[splitFeature])
+            subsets = getSubsets(self.dataSet, splitFeature, splitValue)
+            empty = False
+            for s in subsets:
+                if(len(s) == 0):
+                    empty = True
         
         self.feature = splitFeature
         self.value = splitValue
@@ -110,5 +121,6 @@ tree = Tree()
 tree.printTree()
 tree.printSubsets()
 printDataStats(raw_data)
+print("done!")
 
 
