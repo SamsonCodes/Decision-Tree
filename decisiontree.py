@@ -59,27 +59,25 @@ class Tree:
             #print("self.depth=",self.depth, "len(self.nodes)=",len(self.nodes))
             for x in range(0, len(self.nodes)):
                 #print("x=",x,",len(self.nodes[x].dataSet)=",len(self.nodes[x].dataSet))
-                if(self.nodes[x].layer == self.depth and len(self.nodes[x].dataSet) >= 2):                    
+                if(self.nodes[x].layer == self.depth and len(self.nodes[x].dataSet) >= 2):    
+                    self.nodes[x].split()
                     subsets = getSubsets(self.nodes[x].dataSet, self.nodes[x].feature, self.nodes[x].value)
-                    if(len(subsets[0]) > 0):
+                    if not (hasEmptySets(subsets)):
                         child1 = Node(index, self.depth+1, subsets[0])
                         index+=1
                         self.nodes.append(child1)
-                    """else:
-                        print("!!!!!!Impossible!")"""
-                    if(len(subsets[1]) > 0):
                         child2 = Node(index, self.depth+1, subsets[1])
                         index+=1
                         self.nodes.append(child2)
-                    """else:
-                        print("!!!!!!Impossible!")   """
             self.depth+=1        
     def printTree(self):        
         for layer in range(1, self.depth + 1):
             for node in self.nodes:
                 if(node.layer == layer):
-                    #print(node.name,", ",node.feature,", ",node.value,", ", end="")
-                    print("||",node.name,":",data.columns[node.feature],"<",node.value,"size =",len(node.dataSet),"||",end = "")
+                    if(node.feature != -1):
+                        print("||",node.name,":",data.columns[node.feature],"<","{:.2f}".format(node.value),"gini =","{:.2f}".format(node.gini),"size =",len(node.dataSet),"||",end = "")
+                    else:
+                        print("||",node.name,":","size =",len(node.dataSet),"||",end = "")
             print("\n")     
     def printSubsets(self):        
         for node in self.nodes:
@@ -94,26 +92,37 @@ class Node:
         self.name = "Node" + str(index)
         self.layer = layer      
         self.dataSet = dataSet
-        #printDataStats(self.dataSet)
+        self.feature = -1
+        self.value = 999
+        self.gini = 1
+        
+    def split(self):
         ranges = getRanges(self.dataSet)
         range_min = ranges[0]
         range_max = ranges[1]
-        emptySubsets = True
-        maxTries = 10000
-        tries = 0
-        while(emptySubsets and tries < maxTries):
-            tries+=1
-            splitFeature = random.randint(0,len(dataSet[0]) - 1)
-            splitValue = random.uniform(range_min[splitFeature], range_max[splitFeature])
-            subsets = getSubsets(self.dataSet, splitFeature, splitValue)
-            emptySubsets = False
-            for s in subsets:
-                if(len(s) == 0):
-                    emptySubsets = True
-        """if(tries >= maxTries):
-            print(self.name," couldn't find right split!")"""
-        self.feature = splitFeature
-        self.value = splitValue
+        intervals = 100
+        giniScores = []
+        for f in range(0, len(self.dataSet[0])):
+            for i in range(0,intervals):
+                splitFeature = f
+                splitValue = range_min[f] + i*(range_max[f] - range_min[f])/1000
+                subsets = getSubsets(self.dataSet, splitFeature, splitValue)
+                if hasEmptySets(subsets):
+                    gini = 1 #no empty sets please!
+                else:
+                    gini = random.uniform(0,1) #gini index is random for now!
+                giniScores.append([splitFeature, splitValue, gini])        
+        gini_min_id = 0
+        gini_min = giniScores[0][2]
+        for g in range(0, len(giniScores)):
+            if giniScores[g][2] < gini_min:
+                gini_min_id = g
+                gini_min = giniScores[g][2]
+        #print("gini_min_id",gini_min_id,"gini_min",giniScores[gini_min_id])
+        self.feature = giniScores[gini_min_id][0]
+        self.value = giniScores[gini_min_id][1]
+        self.gini = giniScores[gini_min_id][2]
+        
         
 def getSubsets(dataSet, splitFeature, splitValue):    
     subset1 = []
@@ -123,12 +132,23 @@ def getSubsets(dataSet, splitFeature, splitValue):
             subset1.append(dataSet[x])
         else:
             subset2.append(dataSet[x])
-    return [subset1,subset2]    
+    return [subset1,subset2]  
 
-for i in range(0, 100):       
+def hasEmptySets(subsets):
+    for s in subsets:
+        if(len(s) == 0):
+            return True
+    return False  
+
+#MAIN PROGRAM
+print("running!")
+
+for i in range(0, 10): 
+    print("Tree",i+1)      
     tree = Tree()
     tree.printTree()
-    #tree.printSubsets()
+    print("\n")
+    #tree.printSubsets()   
 
 print("done!")
 
