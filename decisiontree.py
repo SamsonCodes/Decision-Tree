@@ -14,6 +14,7 @@ raw_data = data.values
 def getRanges(dataSet):
     range_min = []
     range_max = []
+    #print(len(dataSet))
     for f in range(0, len(dataSet[0])): #for every feature
         range_min.append(dataSet[0][f]) #add the first value of the feature to the range_min list
         range_max.append(dataSet[0][f]) #add the first value of the feature to the range_max list
@@ -54,28 +55,31 @@ class Tree:
         parentNode = Node(index, self.depth, raw_data)  
         index+=1        
         self.nodes.append(parentNode)
-        splitsLeft = True
-        while(self.depth < maxDepth and splitsLeft):
+        while(self.depth < maxDepth):
             #print("self.depth=",self.depth, "len(self.nodes)=",len(self.nodes))
-            splitsLeft = False
             for x in range(0, len(self.nodes)):
                 #print("x=",x,",len(self.nodes[x].dataSet)=",len(self.nodes[x].dataSet))
-                if((self.nodes[x].layer == self.depth) and (len(self.nodes[x].dataSet) > 1)):
+                if(self.nodes[x].layer == self.depth and len(self.nodes[x].dataSet) >= 2):                    
                     subsets = getSubsets(self.nodes[x].dataSet, self.nodes[x].feature, self.nodes[x].value)
-                    child1 = Node(index, self.depth+1, subsets[0])
-                    index+=1
-                    child2 = Node(index, self.depth+1, subsets[1])
-                    index+=1
-                    self.nodes.append(child1)
-                    self.nodes.append(child2)
-                    splitsLeft = True
+                    if(len(subsets[0]) > 0):
+                        child1 = Node(index, self.depth+1, subsets[0])
+                        index+=1
+                        self.nodes.append(child1)
+                    """else:
+                        print("!!!!!!Impossible!")"""
+                    if(len(subsets[1]) > 0):
+                        child2 = Node(index, self.depth+1, subsets[1])
+                        index+=1
+                        self.nodes.append(child2)
+                    """else:
+                        print("!!!!!!Impossible!")   """
             self.depth+=1        
     def printTree(self):        
         for layer in range(1, self.depth + 1):
             for node in self.nodes:
                 if(node.layer == layer):
                     #print(node.name,", ",node.feature,", ",node.value,", ", end="")
-                    print("||",node.name,":",data.columns[node.feature],"<",node.value,"||", end = "")
+                    print("||",node.name,":",data.columns[node.feature],"<",node.value,"size =",len(node.dataSet),"||",end = "")
             print("\n")     
     def printSubsets(self):        
         for node in self.nodes:
@@ -90,20 +94,24 @@ class Node:
         self.name = "Node" + str(index)
         self.layer = layer      
         self.dataSet = dataSet
-        printDataStats(self.dataSet)
+        #printDataStats(self.dataSet)
         ranges = getRanges(self.dataSet)
         range_min = ranges[0]
         range_max = ranges[1]
-        empty = True
-        while(empty):
+        emptySubsets = True
+        maxTries = 10000
+        tries = 0
+        while(emptySubsets and tries < maxTries):
+            tries+=1
             splitFeature = random.randint(0,len(dataSet[0]) - 1)
             splitValue = random.uniform(range_min[splitFeature], range_max[splitFeature])
             subsets = getSubsets(self.dataSet, splitFeature, splitValue)
-            empty = False
+            emptySubsets = False
             for s in subsets:
                 if(len(s) == 0):
-                    empty = True
-        
+                    emptySubsets = True
+        """if(tries >= maxTries):
+            print(self.name," couldn't find right split!")"""
         self.feature = splitFeature
         self.value = splitValue
         
@@ -116,11 +124,12 @@ def getSubsets(dataSet, splitFeature, splitValue):
         else:
             subset2.append(dataSet[x])
     return [subset1,subset2]    
-        
-tree = Tree()
-tree.printTree()
-tree.printSubsets()
-printDataStats(raw_data)
+
+for i in range(0, 100):       
+    tree = Tree()
+    tree.printTree()
+    #tree.printSubsets()
+
 print("done!")
 
 
