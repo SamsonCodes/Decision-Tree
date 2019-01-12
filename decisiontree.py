@@ -13,19 +13,35 @@ FRAME_WIDTH = 1200
 FRAME_HEIGHT = 800
 BOX_WIDTH = 120
 dataset_url = 'http://mlr.cs.umass.edu/ml/machine-learning-databases/wine-quality/winequality-red.csv'
-data = pd.read_csv(dataset_url, sep=';')
-raw_data = data.values
-targetVariable = 11
-targetCategories = []
-
+#data = pd.read_csv(dataset_url, sep=';')
 """
-#Test data override
-raw_data = [[0,0,0],[0,1,0],[1,0,0],[1,1,1]]
-data = pd.DataFrame(data = raw_data, columns = ["A","B","C"], copy = False)
+ABC = [[0,0,0],[0,1,0],[1,0,0],[1,1,1]]
+data = pd.DataFrame(data = ABC, columns = ["A","B","C"], copy = False)
 targetVariable = 2
-targetCategories = [[-0.1,0.5],[0.5,1]]
-#targetCategories = [0,1]
+targetCategories = []
+intervalSteps = 2
 """
+Golf = [[0,2,1,0,0],
+        [0,2,1,1,0],
+        [1,2,1,0,1],
+        [2,1,1,0,1],
+        [2,0,0,0,1],
+        [2,0,0,1,0],
+        [1,0,0,1,1],
+        [0,1,1,0,0],
+        [0,0,0,0,1],
+        [2,1,0,0,0],
+        [0,1,0,1,1],
+        [1,1,1,1,1],
+        [1,2,0,0,1],
+        [2,1,1,1,0]]
+data = pd.DataFrame(data = Golf, columns = ["Outlook","Temp","Humidity","Windy","Play"], copy = False)
+targetVariable = 4
+targetCategories = [0,1]
+raw_data = data.values
+
+
+
 
 def getRanges(dataSet):
     range_min = []
@@ -66,7 +82,7 @@ class Tree:
         self.name = "Tree"
         self.nodes = []      
         self.depth = 1
-        maxDepth = 4
+        maxDepth = 10
         index = 0          
         parentNode = Node(index, self.depth, raw_data)  
         index+=1        
@@ -91,7 +107,7 @@ class Tree:
         for layer in range(1, self.depth + 1):
             for node in self.nodes:
                 if(node.layer == layer):
-                    if(node.feature != -1):
+                    if not node.leaf:
                         print("||",node.name,":",data.columns[node.feature],"<","{:.2f}".format(node.value),"gini =","{:.2f}".format(node.gini),"size =",len(node.dataSet),"||",end = "")
                     else:
                         print("||",node.name,":","size =",len(node.dataSet),"||",end = "")
@@ -105,17 +121,19 @@ class Tree:
         print("\n") 
     def draw(self, canvas):
         for layer in range(1, self.depth + 1): 
-            x = 0
+            layerNodes = []
             for node in self.nodes:                
                 if(node.layer == layer):    
-                    x+=1
-                    recWidth = BOX_WIDTH
-                    recHeight = 70
-                    if(node.feature != -1):                        
-                        lines = [node.name, str(data.columns[node.feature]) + "<" + "{:.2f}".format(node.value),"gini =" + "{:.2f}".format(node.gini),"data set size =" + str(len(node.dataSet))]
-                    else:
-                        lines = [node.name, "gini =" + "{:.2f}".format(node.gini),"data set size =" + str(len(node.dataSet))]
-                    node.draw(x*recWidth*1.1 - recWidth/2,layer*recHeight*1.1 - recHeight/2,recWidth, recHeight, lines, canvas)
+                    layerNodes.append(node)
+            for n in range (0, len(layerNodes)):                
+                x = FRAME_WIDTH * (n + 1) / (1 + len(layerNodes))                    
+                recWidth = BOX_WIDTH
+                recHeight = 70
+                if not layerNodes[n].leaf:                        
+                    lines = [layerNodes[n].name, str(data.columns[layerNodes[n].feature]) + "<" + "{:.2f}".format(layerNodes[n].value),"gini =" + "{:.2f}".format(layerNodes[n].gini),"data set size =" + str(len(layerNodes[n].dataSet))]
+                else:
+                    lines = [layerNodes[n].name, "category =" + str(layerNodes[n].category), "data set size =" + str(len(layerNodes[n].dataSet))]
+                layerNodes[n].draw(x - recWidth/2,layer*recHeight*1.1 - recHeight/2,recWidth, recHeight, lines, canvas)
 
 class Node:
     def __init__(self, index, layer, dataSet):
@@ -132,6 +150,7 @@ class Node:
         
         if(self.leaf):
             self.name = "Leaf" + str(index)
+            self.category = firstRowCategory
         else:            
             self.name = "Node" + str(index)
         print("classified as",self.name)
@@ -139,13 +158,20 @@ class Node:
         self.dataSet = dataSet
         self.feature = -1
         self.value = 999
-        self.gini = 1
+        self.gini = 0
     def draw(self, drawX, drawY, recWidth, recHeight, lines, canvas):
-        recColor = 'white'                
-        canvas.create_rectangle(drawX,drawY,drawX+recWidth,drawY+recHeight, fill = recColor)
-        for i in range(0, len(lines)):            
-            canvas.create_text(drawX + recWidth/2,drawY + 10 + i * (recHeight/len(lines)),fill="black",font="Times 8 italic bold",
-                                text=lines[i])
+        if(self.leaf):
+            recColor = 'darkGreen'  
+            canvas.create_oval(drawX,drawY,drawX+recWidth,drawY+recHeight, fill = recColor)
+            for i in range(0, len(lines)):            
+                canvas.create_text(drawX + recWidth/2,drawY + 10 + i * (recHeight/len(lines)),fill="white",font="Times 8 italic bold",
+                                    text=lines[i])
+        else:            
+            recColor = 'brown'  
+            canvas.create_rectangle(drawX,drawY,drawX+recWidth,drawY+recHeight, fill = recColor)
+            for i in range(0, len(lines)):            
+                canvas.create_text(drawX + recWidth/2,drawY + 10 + i * (recHeight/len(lines)),fill="white",font="Times 8 italic bold",
+                                    text=lines[i])
         
         
     def split(self):
@@ -160,11 +186,9 @@ class Node:
                     splitFeature = f
                     splitValue = range_min[f] + i*(range_max[f] - range_min[f])/intervals
                     subsets = getSubsets(self.dataSet, splitFeature, splitValue)
-                    if hasEmptySets(subsets):
-                        gini = 1 #no empty sets please!
-                    else:
+                    if not hasEmptySets(subsets):
                         gini = giniIndex(splitFeature,splitValue,self.dataSet) #gini index is random for now!
-                    giniScores.append([splitFeature, splitValue, gini])
+                        giniScores.append([splitFeature, splitValue, gini])
         
         giniScores.sort(key = itemgetter(2)) #Sorts the list by gini score in ascending order
         gini_min_id = 0
@@ -175,7 +199,38 @@ class Node:
         self.gini = giniScores[gini_min_id][2]
 
 def giniIndex(feature,value,dataSet):
-    return random.uniform(0,1)        
+    subsets = getSubsets(dataSet,feature,value)
+    ginis = []
+    for subset in subsets:
+        categories = []
+        if isinstance(targetCategories[0], list):
+            for interval in targetCategories:
+                categories.append([])
+            for row in subset:
+                for interval in targetCategories:
+                    if(getCategory(row[targetVariable]) == getCategory(interval[1])):
+                        categories[getCategory(interval[1])].append(row)            
+            blob = 0
+            for c in range (0, len(categories)):
+                blob+=(len(categories[c])/len(dataSet))**2
+            localGini = 1 - blob
+            ginis.append(localGini)
+        else:
+            for c in targetCategories:
+                categories.append([])
+            for row in subset:
+                for c in targetCategories:
+                    if(getCategory(row[targetVariable]) == c):
+                        categories[c].append(row)           
+            blob = 0
+            for c in range (0, len(categories)):
+                blob+=(len(categories[c])/len(dataSet))**2
+            localGini = 1 - blob
+            ginis.append(localGini)
+    gini = 0
+    for g in range(0,len(ginis)):
+        gini+=(ginis[g]*len(subsets[g]))/len(dataSet)    
+    return gini        
         
 def getSubsets(dataSet, splitFeature, splitValue):    
     subset1 = []
@@ -194,26 +249,31 @@ def hasEmptySets(subsets):
     return False  
 
 def getCategory(targetValue):
-    if isinstance(targetCategories[0], list):  #If categories are intervals           
+    if isinstance(targetCategories[0], list):  #If categories are intervals        
+        if targetValue == targetCategories[0][0]:
+                return 0     
         for interval in targetCategories:
             if targetValue > interval[0] and targetValue <= interval[1]:
                 return targetCategories.index(interval) #return what interval it is in
     else: #If categories are simply values        
         return targetValue #Simply return the value
 
-def setUp():
+def setUp(steps):
     ranges = getRanges(raw_data)
     targetVariableInterval = [ranges[0][targetVariable],ranges[1][targetVariable]]
     print("targetVariableInterval=",targetVariableInterval)
-    targetVariableRange = targetVariableInterval[1] - targetVariableInterval[0]
-    steps = 10
+    targetVariableRange = targetVariableInterval[1] - targetVariableInterval[0]    
     for x in range(0, steps):
         targetCategories.append([targetVariableInterval[0] + x*(targetVariableRange/steps), targetVariableInterval[0] + (x+1)*(targetVariableRange/steps)])
     print("targetCategories =",targetCategories)   
 
 #MAIN PROGRAM
 print("running!")
-setUp()
+print("head")
+print(data.head())
+print("\n")
+if(len(targetCategories) == 0):
+    setUp(intervalSteps)
 
 for i in range(0, 1): 
     print("Tree",i+1)      
