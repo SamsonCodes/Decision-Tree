@@ -21,6 +21,7 @@ targetVariable = 2
 targetCategories = []
 intervalSteps = 2
 """
+
 Golf = [[0,2,1,0,0],
         [0,2,1,1,0],
         [1,2,1,0,1],
@@ -38,6 +39,7 @@ Golf = [[0,2,1,0,0],
 data = pd.DataFrame(data = Golf, columns = ["Outlook","Temp","Humidity","Windy","Play"], copy = False)
 targetVariable = 4
 targetCategories = [0,1]
+
 raw_data = data.values
 
 
@@ -146,8 +148,9 @@ class Tree:
             if(dataRow[self.nodes[currentId].feature] < self.nodes[currentId].value):
                 currentId = self.nodes[currentId].children[0]
             else:
-                currentId = self.nodes[currentId].children[0]
+                currentId = self.nodes[currentId].children[1]
         print(dataRow,"-->",self.nodes[currentId].category)  
+        
 class Node:
     def __init__(self, index, layer, dataSet):
         firstRowCategory = getCategory(dataSet[0][targetVariable]) #used in the for loop to determine whether or not the dataset is pure       
