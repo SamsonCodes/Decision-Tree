@@ -11,18 +11,21 @@ from tkinter import *
 
 FRAME_WIDTH = 1200
 FRAME_HEIGHT = 800
-"""
+BOX_WIDTH = 120
 dataset_url = 'http://mlr.cs.umass.edu/ml/machine-learning-databases/wine-quality/winequality-red.csv'
 data = pd.read_csv(dataset_url, sep=';')
 raw_data = data.values
 targetVariable = 11
-"""
+targetCategories = []
 
+"""
 #Test data override
 raw_data = [[0,0,0],[0,1,0],[1,0,0],[1,1,1]]
 data = pd.DataFrame(data = raw_data, columns = ["A","B","C"], copy = False)
 targetVariable = 2
-targetCategories = [[0,0.5],[0.5,1]]
+targetCategories = [[-0.1,0.5],[0.5,1]]
+#targetCategories = [0,1]
+"""
 
 def getRanges(dataSet):
     range_min = []
@@ -73,7 +76,7 @@ class Tree:
             for x in range(0, len(self.nodes)):
                 #print("x=",x,",len(self.nodes[x].dataSet)=",len(self.nodes[x].dataSet))
                 if(self.nodes[x].layer == self.depth):    
-                    if(len(self.nodes[x].dataSet) >= 2):
+                    if(len(self.nodes[x].dataSet) >= 2 and not self.nodes[x].leaf):
                         self.nodes[x].split()
                         subsets = getSubsets(self.nodes[x].dataSet, self.nodes[x].feature, self.nodes[x].value)
                         if not (hasEmptySets(subsets)):
@@ -106,7 +109,7 @@ class Tree:
             for node in self.nodes:                
                 if(node.layer == layer):    
                     x+=1
-                    recWidth = 100
+                    recWidth = BOX_WIDTH
                     recHeight = 70
                     if(node.feature != -1):                        
                         lines = [node.name, str(data.columns[node.feature]) + "<" + "{:.2f}".format(node.value),"gini =" + "{:.2f}".format(node.gini),"data set size =" + str(len(node.dataSet))]
@@ -118,13 +121,13 @@ class Node:
     def __init__(self, index, layer, dataSet):
         firstRowCategory = getCategory(dataSet[0][targetVariable]) #used in the for loop to determine whether or not the dataset is pure       
         self.leaf = True #Leaf until proven otherwise
-        print("node",index) 
+        #print("node",index,", firstRowCategory =",firstRowCategory) 
         #print("dataSet=",dataSet)
-        for row in dataSet:
-            print(row[targetVariable])
+        for row in dataSet:            
             if(getCategory(row[targetVariable]) != firstRowCategory): #if the data set is not pure
-                if(self.leaf):
-                    print("firstRowCategory=",firstRowCategory, "this row=",row)
+                #if(self.leaf):
+                    #print(row[targetVariable],"category=",getCategory(row[targetVariable]))
+                    #print("Not a leaf this is!")
                 self.leaf = False #then this node is not a leaf
         
         if(self.leaf):
@@ -160,7 +163,7 @@ class Node:
                     if hasEmptySets(subsets):
                         gini = 1 #no empty sets please!
                     else:
-                        gini = random.uniform(0,1) #gini index is random for now!
+                        gini = giniIndex(splitFeature,splitValue,self.dataSet) #gini index is random for now!
                     giniScores.append([splitFeature, splitValue, gini])
         
         giniScores.sort(key = itemgetter(2)) #Sorts the list by gini score in ascending order
@@ -170,7 +173,9 @@ class Node:
         self.feature = giniScores[gini_min_id][0]
         self.value = giniScores[gini_min_id][1]
         self.gini = giniScores[gini_min_id][2]
-        
+
+def giniIndex(feature,value,dataSet):
+    return random.uniform(0,1)        
         
 def getSubsets(dataSet, splitFeature, splitValue):    
     subset1 = []
@@ -191,13 +196,24 @@ def hasEmptySets(subsets):
 def getCategory(targetValue):
     if isinstance(targetCategories[0], list):  #If categories are intervals           
         for interval in targetCategories:
-            if targetValue > interval[0] and targetValue < interval[1]:
+            if targetValue > interval[0] and targetValue <= interval[1]:
                 return targetCategories.index(interval) #return what interval it is in
-    else: #If categories are simply values
+    else: #If categories are simply values        
         return targetValue #Simply return the value
+
+def setUp():
+    ranges = getRanges(raw_data)
+    targetVariableInterval = [ranges[0][targetVariable],ranges[1][targetVariable]]
+    print("targetVariableInterval=",targetVariableInterval)
+    targetVariableRange = targetVariableInterval[1] - targetVariableInterval[0]
+    steps = 10
+    for x in range(0, steps):
+        targetCategories.append([targetVariableInterval[0] + x*(targetVariableRange/steps), targetVariableInterval[0] + (x+1)*(targetVariableRange/steps)])
+    print("targetCategories =",targetCategories)   
 
 #MAIN PROGRAM
 print("running!")
+setUp()
 
 for i in range(0, 1): 
     print("Tree",i+1)      
