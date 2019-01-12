@@ -96,12 +96,14 @@ class Tree:
                         self.nodes[x].split()
                         subsets = getSubsets(self.nodes[x].dataSet, self.nodes[x].feature, self.nodes[x].value)
                         if not (hasEmptySets(subsets)):
-                            child1 = Node(index, self.depth+1, subsets[0])
+                            child1 = Node(index, self.depth+1, subsets[0])                            
+                            self.nodes[x].addChild(index)
                             index+=1
                             self.nodes.append(child1)
                             child2 = Node(index, self.depth+1, subsets[1])
+                            self.nodes[x].addChild(index)
                             index+=1
-                            self.nodes.append(child2)
+                            self.nodes.append(child2) 
             self.depth+=1        
     def printTree(self):        
         for layer in range(1, self.depth + 1):
@@ -134,7 +136,18 @@ class Tree:
                 else:
                     lines = [layerNodes[n].name, "category =" + str(layerNodes[n].category), "data set size =" + str(len(layerNodes[n].dataSet))]
                 layerNodes[n].draw(x - recWidth/2,layer*recHeight*1.1 - recHeight/2,recWidth, recHeight, lines, canvas)
-
+    def whatIsThis(self, dataRow):
+        currentId = 0
+        if(dataRow[self.nodes[0].feature] < self.nodes[0].value):
+            currentId = 1
+        else:
+            currentId = 2
+        while not(self.nodes[currentId].leaf):
+            if(dataRow[self.nodes[currentId].feature] < self.nodes[currentId].value):
+                currentId = self.nodes[currentId].children[0]
+            else:
+                currentId = self.nodes[currentId].children[0]
+        print(dataRow,"-->",self.nodes[currentId].category)  
 class Node:
     def __init__(self, index, layer, dataSet):
         firstRowCategory = getCategory(dataSet[0][targetVariable]) #used in the for loop to determine whether or not the dataset is pure       
@@ -153,12 +166,14 @@ class Node:
             self.category = firstRowCategory
         else:            
             self.name = "Node" + str(index)
+        self.index = index
         print("classified as",self.name)
         self.layer = layer      
         self.dataSet = dataSet
         self.feature = -1
         self.value = 999
         self.gini = 0
+        self.children = []
     def draw(self, drawX, drawY, recWidth, recHeight, lines, canvas):
         if(self.leaf):
             recColor = 'darkGreen'  
@@ -172,8 +187,8 @@ class Node:
             for i in range(0, len(lines)):            
                 canvas.create_text(drawX + recWidth/2,drawY + 10 + i * (recHeight/len(lines)),fill="white",font="Times 8 italic bold",
                                     text=lines[i])
-        
-        
+    def addChild(self,index):
+        self.children.append(index)    
     def split(self):
         ranges = getRanges(self.dataSet)
         range_min = ranges[0]
@@ -267,6 +282,7 @@ def setUp(steps):
         targetCategories.append([targetVariableInterval[0] + x*(targetVariableRange/steps), targetVariableInterval[0] + (x+1)*(targetVariableRange/steps)])
     print("targetCategories =",targetCategories)   
 
+
 #MAIN PROGRAM
 print("running!")
 print("head")
@@ -275,14 +291,12 @@ print("\n")
 if(len(targetCategories) == 0):
     setUp(intervalSteps)
 
-for i in range(0, 1): 
-    print("Tree",i+1)      
-    tree = Tree()
-    tree.printTree()
-    print("\n")
+     
+tree = Tree()
+tree.printTree()
     #tree.printSubsets()   
-
-getCategory(0)
+for dataRow in raw_data:
+    tree.whatIsThis(dataRow)
     
 window = Tk()
 window.title("Tree of Wisdom")
