@@ -12,16 +12,15 @@ from tkinter import *
 FRAME_WIDTH = 1200
 FRAME_HEIGHT = 800
 BOX_WIDTH = 120
-dataset_url = 'http://mlr.cs.umass.edu/ml/machine-learning-databases/wine-quality/winequality-red.csv'
-#data = pd.read_csv(dataset_url, sep=';')
-"""
+
+
 ABC = [[0,0,0],[0,1,0],[1,0,0],[1,1,1]]
 data = pd.DataFrame(data = ABC, columns = ["A","B","C"], copy = False)
 targetVariable = 2
-targetCategories = []
-intervalSteps = 2
-"""
+targetCategories = [0,1]
 
+
+"""
 Golf = [[0,2,1,0,0],
         [0,2,1,1,0],
         [1,2,1,0,1],
@@ -39,7 +38,14 @@ Golf = [[0,2,1,0,0],
 data = pd.DataFrame(data = Golf, columns = ["Outlook","Temp","Humidity","Windy","Play"], copy = False)
 targetVariable = 4
 targetCategories = [0,1]
-
+"""
+"""
+dataset_url = 'http://mlr.cs.umass.edu/ml/machine-learning-databases/wine-quality/winequality-red.csv'
+data = pd.read_csv(dataset_url, sep=';')
+targetVariable = 11
+targetCategories = []
+intervalSteps = 5 
+"""
 raw_data = data.values
 
 
@@ -144,12 +150,20 @@ class Tree:
             currentId = 1
         else:
             currentId = 2
-        while not(self.nodes[currentId].leaf):
-            if(dataRow[self.nodes[currentId].feature] < self.nodes[currentId].value):
-                currentId = self.nodes[currentId].children[0]
+        stop = False
+        loops = 0
+        while ((not self.nodes[currentId].leaf) and (not stop) and (loops < 1000)):
+            loops+=1
+            if len(self.nodes[currentId].children) == 0:
+                stop = True
+                print("stop = True")
             else:
-                currentId = self.nodes[currentId].children[1]
-        print(dataRow,"-->",self.nodes[currentId].category)  
+                if(dataRow[self.nodes[currentId].feature] < self.nodes[currentId].value):
+                    currentId = self.nodes[currentId].children[0]
+                else:
+                    currentId = self.nodes[currentId].children[1]
+        if self.nodes[currentId].leaf:
+            print(dataRow,"-->",self.nodes[currentId].category)  
         
 class Node:
     def __init__(self, index, layer, dataSet):
