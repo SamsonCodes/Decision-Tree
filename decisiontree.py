@@ -13,12 +13,12 @@ FRAME_WIDTH = 1200
 FRAME_HEIGHT = 800
 BOX_WIDTH = 120
 
-
+"""
 ABC = [[0,0,0],[0,1,0],[1,0,0],[1,1,1]]
 data = pd.DataFrame(data = ABC, columns = ["A","B","C"], copy = False)
 targetVariable = 2
 targetCategories = [0,1]
-
+"""
 
 """
 Golf = [[0,2,1,0,0],
@@ -39,13 +39,13 @@ data = pd.DataFrame(data = Golf, columns = ["Outlook","Temp","Humidity","Windy",
 targetVariable = 4
 targetCategories = [0,1]
 """
-"""
+
 dataset_url = 'http://mlr.cs.umass.edu/ml/machine-learning-databases/wine-quality/winequality-red.csv'
 data = pd.read_csv(dataset_url, sep=';')
 targetVariable = 11
 targetCategories = []
 intervalSteps = 5 
-"""
+
 raw_data = data.values
 
 
@@ -312,8 +312,8 @@ if(len(targetCategories) == 0):
 tree = Tree()
 tree.printTree()
     #tree.printSubsets()   
-for dataRow in raw_data:
-    tree.whatIsThis(dataRow)
+"""for dataRow in raw_data:
+    tree.whatIsThis(dataRow)"""
     
 window = Tk()
 window.title("Tree of Wisdom")
