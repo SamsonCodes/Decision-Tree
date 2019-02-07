@@ -31,6 +31,7 @@ Golf = [[0,2,1,0,0],
 data = pd.DataFrame(data = Golf, columns = ["Outlook","Temp","Humidity","Windy","Play"], copy = False)
 targetIndex = 4
 targetCategories = [0,1]
+f=1.1
 
 class Leaf:
     def __init__(self, rows):
@@ -38,10 +39,12 @@ class Leaf:
         self.rows = rows
     def printMe(self):
         print("Leaf :", self.rows)
-    def drawMe(self, drawX, drawY, size, layer, canvas):            
-        recColor = 'green'  
-        canvas.create_oval(drawX - size/2, drawY + size/2, 
-                                drawX + size/2, drawY - size/2,
+    def drawMe(self, drawX, drawY, size, index, layer, canvas):            
+        recColor = 'green' 
+        x = drawX - ((2**(layer)/2)-index-0.5)*size*f
+        y = drawY + (layer)*size*f     
+        canvas.create_oval(x - size/2, y + size/2, 
+                                x + size/2, y - size/2,
                                 fill = recColor)
 class Node:
     def __init__(self, question, trueBranch, falseBranch):
@@ -53,21 +56,22 @@ class Node:
         print("Node: " + self.question.text())
         self.trueBranch.printMe()
         self.falseBranch.printMe()
-    def drawMe(self, drawX, drawY, size, layer, canvas):            
-        recColor = 'brown'  
-        trueX = drawX - size/1.8 - layer*size/1.8
-        trueY = drawY + size*1.1
-        falseX = drawX + size/1.8 + layer*size/1.8
+    def drawMe(self, drawX, drawY, size, index, layer, canvas):            
+        recColor = 'brown'
+        x = drawX - ((2**(layer)/2)-index-0.5)*size*f
+        y = drawY + (layer)*size*f  
+        trueX = drawX - (2**(layer+1)/2 - 2*index-0.5)*size*f
+        trueY = drawY + (layer+1)*size*f
+        falseX = drawX - (2**(layer+1)/2 - (2*index+1)-0.5)*size*f
         falseY = trueY
-        canvas.create_line(drawX, drawY, trueX, trueY,
+        canvas.create_line(x, y, trueX, trueY,
                                 fill = 'black')
-        canvas.create_line(drawX, drawY, falseX, falseY,
+        canvas.create_line(x, y, falseX, falseY,
                                 fill = 'black')
-        canvas.create_rectangle(drawX - size/2, drawY + size/2, 
-                                drawX + size/2, drawY - size/2,
+        canvas.create_rectangle(x - size/2, y + size/2, x + size/2, y - size/2,
                                 fill = recColor)
-        self.trueBranch.drawMe(trueX, trueY, size, layer + 1, canvas)
-        self.falseBranch.drawMe(falseX, falseY, size, layer + 1, canvas)
+        self.trueBranch.drawMe(drawX, drawY, size, index*2, layer + 1, canvas)
+        self.falseBranch.drawMe(drawX, drawY, size, index*2 + 1, layer + 1, canvas)
             
 class Question:
     def __init__(self, operator, valueIndex, splitValue):
@@ -206,7 +210,7 @@ window.title("Tree of Wisdom")
 canvas = Canvas(window ,width=FRAME_WIDTH ,height=FRAME_HEIGHT)
 canvas.pack()
 size = FRAME_WIDTH/20
-tree.drawMe(FRAME_WIDTH/2, size/2.2, size, 0, canvas)
+tree.drawMe(FRAME_WIDTH/2, size, size, 0, 0, canvas)
 
 window.mainloop()
 
