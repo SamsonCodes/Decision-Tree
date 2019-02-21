@@ -20,7 +20,7 @@ targetVariable = 2
 targetCategories = [0,1]
 """
 
-"""
+
 Golf = [[0,2,1,0,0],
         [0,2,1,1,0],
         [1,2,1,0,1],
@@ -45,12 +45,10 @@ data = pd.read_csv(dataset_url, sep=';')
 targetVariable = 11
 targetCategories = []
 intervalSteps = 5 
-
+"""
 raw_data = data.values
 
-
-
-
+#This method takes a dataset matrix as input and returns the ranges of each column
 def getRanges(dataSet):
     range_min = []
     range_max = []
@@ -65,6 +63,7 @@ def getRanges(dataSet):
                 range_max[f] = dataSet[x][f] #update the max
     return [range_min, range_max]
 
+#This prints information about a dataset
 def printDataStats(dataSet):    
     #print(data.columns)
     print("len(dataSet) =",len(dataSet))
@@ -85,7 +84,9 @@ def printDataStats(dataSet):
     """
     #print("\n")
 
+#This is the Tree class
 class Tree:
+    #this is the constructor
     def __init__(self):
         self.name = "Tree"
         self.nodes = []      
@@ -112,7 +113,8 @@ class Tree:
                             self.nodes[x].addChild(index)
                             index+=1
                             self.nodes.append(child2) 
-            self.depth+=1        
+            self.depth+=1   
+    #This prints the Tree in the console
     def printTree(self):        
         for layer in range(1, self.depth + 1):
             for node in self.nodes:
@@ -122,6 +124,7 @@ class Tree:
                     else:
                         print("||",node.name,":","size =",len(node.dataSet),"||",end = "")
             print("\n")     
+    # This prints information about the subsets for each node in the tree
     def printSubsets(self):        
         for node in self.nodes:
             if(node.layer == self.depth):
@@ -129,6 +132,7 @@ class Tree:
                 printDataStats(node.dataSet)
                 print()
         print("\n") 
+    #This draws the Tree on the canvas
     def draw(self, canvas):
         for layer in range(1, self.depth + 1): 
             layerNodes = []
@@ -144,6 +148,7 @@ class Tree:
                 else:
                     lines = [layerNodes[n].name, "category =" + str(layerNodes[n].category), "data set size =" + str(len(layerNodes[n].dataSet))]
                 layerNodes[n].draw(x - recWidth/2,layer*recHeight*1.1 - recHeight/2,recWidth, recHeight, lines, canvas)
+    # This was meant to be the classification method, not sure if it works
     def whatIsThis(self, dataRow):
         currentId = 0
         if(dataRow[self.nodes[0].feature] < self.nodes[0].value):
@@ -164,8 +169,10 @@ class Tree:
                     currentId = self.nodes[currentId].children[1]
         if self.nodes[currentId].leaf:
             print(dataRow,"-->",self.nodes[currentId].category)  
-        
+
+# This is the Node class        
 class Node:
+    #This is the constructor
     def __init__(self, index, layer, dataSet):
         firstRowCategory = getCategory(dataSet[0][targetVariable]) #used in the for loop to determine whether or not the dataset is pure       
         self.leaf = True #Leaf until proven otherwise
@@ -191,6 +198,7 @@ class Node:
         self.value = 999
         self.gini = 0
         self.children = []
+    # This is the draw method, it draws the Node on the canvas
     def draw(self, drawX, drawY, recWidth, recHeight, lines, canvas):
         if(self.leaf):
             recColor = 'darkGreen'  
@@ -204,8 +212,10 @@ class Node:
             for i in range(0, len(lines)):            
                 canvas.create_text(drawX + recWidth/2,drawY + 10 + i * (recHeight/len(lines)),fill="white",font="Times 8 italic bold",
                                     text=lines[i])
+    #This adds the indices of Child nodes to the children array
     def addChild(self,index):
         self.children.append(index)    
+    #This splits the dataSet of the node on the basis of the best split found with the gini index
     def split(self):
         ranges = getRanges(self.dataSet)
         range_min = ranges[0]
@@ -230,6 +240,7 @@ class Node:
         self.value = giniScores[gini_min_id][1]
         self.gini = giniScores[gini_min_id][2]
 
+# This calculates the gini index for a given splitfeature, splitvalue and dataSet
 def giniIndex(feature,value,dataSet):
     subsets = getSubsets(dataSet,feature,value)
     ginis = []
@@ -263,7 +274,8 @@ def giniIndex(feature,value,dataSet):
     for g in range(0,len(ginis)):
         gini+=(ginis[g]*len(subsets[g]))/len(dataSet)    
     return gini        
-        
+
+#This splits a dataset on the basis of a splitFeature and splitValue        
 def getSubsets(dataSet, splitFeature, splitValue):    
     subset1 = []
     subset2 = []
@@ -274,22 +286,25 @@ def getSubsets(dataSet, splitFeature, splitValue):
             subset2.append(dataSet[x])
     return [subset1,subset2]  
 
+#This checks whether or not a set of sets contains empty sets
 def hasEmptySets(subsets):
     for s in subsets:
         if(len(s) == 0):
             return True
     return False  
 
+# This returns the category for a given targetValue
 def getCategory(targetValue):
     if isinstance(targetCategories[0], list):  #If categories are intervals        
         if targetValue == targetCategories[0][0]:
-                return 0     
+                return 0    #first interval  
         for interval in targetCategories:
             if targetValue > interval[0] and targetValue <= interval[1]:
                 return targetCategories.index(interval) #return what interval it is in
     else: #If categories are simply values        
         return targetValue #Simply return the value
 
+# This method is only required for creating intervals for categories.
 def setUp(steps):
     ranges = getRanges(raw_data)
     targetVariableInterval = [ranges[0][targetVariable],ranges[1][targetVariable]]
@@ -306,6 +321,7 @@ print("head")
 print(data.head())
 print("\n")
 if(len(targetCategories) == 0):
+    #print(targetCategories)
     setUp(intervalSteps)
 
      
