@@ -230,6 +230,7 @@ def getInterval(rows, index):
             maxValue = row[index]
     return minValue, maxValue
 
+# Inspired by random-forest/tutorial: Decision tree from scratch
 def print_tree(node, spacing=""):
     """World's most elegant tree printing function."""
 
@@ -249,6 +250,22 @@ def print_tree(node, spacing=""):
     print (spacing + '--> False:')
     print_tree(node.falseBranch, spacing + "  ")
 
+# Inspired by random-forest/tutorial: Decision tree from scratch    
+def classify(row, node):
+    """See the 'rules of recursion' above."""
+
+    # Base case: we've reached a leaf
+    if isinstance(node, Leaf):
+        return node.predictions
+
+    # Decide whether to follow the true-branch or the false-branch.
+    # Compare the feature / value stored in the node,
+    # to the example we're considering.
+    if answer(node.question, row):
+        return classify(row, node.trueBranch)
+    else:
+        return classify(row, node.falseBranch)
+
 #MAIN PROGRAM
 print("running!")
 print("Data head:")
@@ -257,6 +274,8 @@ print("\n")
 
 tree = buildTree(data.values)
 print_tree(tree)
+testData = data.values[0][0:-1] #use first row without the label as testdata
+print(str(testData) + "--->" + str(classify(testData,tree)))
 """
 window = Tk()
 window.title("Tree of Wisdom")
