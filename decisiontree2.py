@@ -10,8 +10,6 @@ import pandas as pd
 from operator import itemgetter
 from tkinter import *  
 
-FRAME_WIDTH = 1200
-FRAME_HEIGHT = 800
 operators = ['==','<','>']
 
 Golf = [[0,2,1,0,0],
@@ -31,7 +29,6 @@ Golf = [[0,2,1,0,0],
 data = pd.DataFrame(data = Golf, columns = ["Outlook","Temp","Humidity","Windy","Play"], copy = False)
 targetIndex = 4
 targetCategories = [0,1]
-f=1.1
 
 def class_counts(rows):
     """Counts the number of each type of example in a dataset."""
@@ -48,52 +45,15 @@ def class_counts(rows):
 class Leaf:
     # This is the constructor
     def __init__(self, rows):
-        #print("I am a cute little Leaf!")
-        self.rows = rows
         self.predictions = class_counts(rows)
-    # This prints the data corresponding with this Leaf
-    def printMe(self):
-        print("Leaf :", self.rows)
-    # This draws the Leaf on the canvas
-    def drawMe(self, drawX, drawY, size, index, layer, canvas):            
-        recColor = 'green' 
-        x = drawX - ((2**(layer)/2)-index-0.5)*size*f
-        y = drawY + (layer)*size*f     
-        canvas.create_oval(x - size/2, y + size/2, 
-                                x + size/2, y - size/2,
-                                fill = recColor)
+        
 # This is the Node class
 class Node:
     # This is the constructor
-    def __init__(self, question, trueBranch, falseBranch):
-        #print("I am a cute little Node!")
+    def __init__(self, question, trueBranch, falseBranch):        
         self.question = question
         self.trueBranch = trueBranch
-        self.falseBranch = falseBranch
-    # This prints the Node's question and continues down the tree to do the same
-    # for all of it's child nodes
-    def printMe(self):
-        print("Node: " + self.question.text())
-        self.trueBranch.printMe()
-        self.falseBranch.printMe()
-    # This draws the Node and all of it's child nodes on the canvas
-    def drawMe(self, drawX, drawY, size, index, layer, canvas):            
-        recColor = 'brown'
-        x = drawX - ((2**(layer)/2)-index-0.5)*size*f
-        y = drawY + (layer)*size*f  
-        trueX = drawX - (2**(layer+1)/2 - 2*index-0.5)*size*f
-        trueY = drawY + (layer+1)*size*f
-        falseX = drawX - (2**(layer+1)/2 - (2*index+1)-0.5)*size*f
-        falseY = trueY
-        canvas.create_line(x, y, trueX, trueY,
-                                fill = 'black')
-        canvas.create_line(x, y, falseX, falseY,
-                                fill = 'black')
-        canvas.create_rectangle(x - size/2, y + size/2, x + size/2, y - size/2,
-                                fill = recColor)
-        self.trueBranch.drawMe(drawX, drawY, size, index*2, layer + 1, canvas)
-        self.falseBranch.drawMe(drawX, drawY, size, index*2 + 1, layer + 1, canvas)
-    #def classify(self, rows):        
+        self.falseBranch = falseBranch       
 
 # This class saves the splitcondition            
 class Question:
@@ -106,10 +66,9 @@ class Question:
         return (data.columns[self.valueIndex] + ' ' + self.operator 
                 + ' ' + str(self.splitValue) + "?")
 
-# This builds the tree, returns the highest Node with all of its children
+# This builds the tree recursively
 def buildTree(rows):
     info, question = findBestSplit(targetCategories, targetIndex, rows)
-    #print("buildTree(",rows,"): info = " + str(info) + ", question = " + question.text())
     if info == 0 or question == None: return Leaf(rows)
     trueRows, falseRows = getSubsets(rows, question)
     trueBranch = buildTree(trueRows)
@@ -230,7 +189,7 @@ def getInterval(rows, index):
             maxValue = row[index]
     return minValue, maxValue
 
-# Inspired by random-forest/tutorial: Decision tree from scratch
+# Adapted from random-forest/tutorial: Decision tree from scratch
 def print_tree(node, spacing=""):
     """World's most elegant tree printing function."""
 
@@ -250,7 +209,7 @@ def print_tree(node, spacing=""):
     print (spacing + '--> False:')
     print_tree(node.falseBranch, spacing + "  ")
 
-# Inspired by random-forest/tutorial: Decision tree from scratch    
+# Adapted from random-forest/tutorial: Decision tree from scratch    
 def classify(row, node):
     """See the 'rules of recursion' above."""
 
@@ -276,16 +235,5 @@ tree = buildTree(data.values)
 print_tree(tree)
 testData = data.values[0][0:-1] #use first row without the label as testdata
 print(str(testData) + "--->" + str(classify(testData,tree)))
-"""
-window = Tk()
-window.title("Tree of Wisdom")
-
-canvas = Canvas(window ,width=FRAME_WIDTH ,height=FRAME_HEIGHT)
-canvas.pack()
-size = FRAME_WIDTH/20
-tree.drawMe(FRAME_WIDTH/2, size, size, 0, 0, canvas)
-
-window.mainloop()
-"""
 
 print("done!")
