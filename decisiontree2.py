@@ -30,6 +30,7 @@ data = pd.DataFrame(data = Golf, columns = ["Outlook","Temp","Humidity","Windy",
 targetIndex = 4
 targetCategories = [0,1]
 
+# From random-forest/tutorial: Decision tree from scratch
 def class_counts(rows):
     """Counts the number of each type of example in a dataset."""
     counts = {}  # a dictionary of label -> count.
@@ -67,6 +68,7 @@ class Question:
                 + ' ' + str(self.splitValue) + "?")
 
 # This builds the tree recursively
+# Adapted from random-forest/tutorial: Decision tree from scratch
 def buildTree(rows):
     info, question = findBestSplit(targetCategories, targetIndex, rows)
     if info == 0 or question == None: return Leaf(rows)
@@ -211,8 +213,6 @@ def print_tree(node, spacing=""):
 
 # Adapted from random-forest/tutorial: Decision tree from scratch    
 def classify(row, node):
-    """See the 'rules of recursion' above."""
-
     # Base case: we've reached a leaf
     if isinstance(node, Leaf):
         return node.predictions
@@ -233,7 +233,8 @@ print("\n")
 
 tree = buildTree(data.values)
 print_tree(tree)
-testData = data.values[0][0:-1] #use first row without the label as testdata
-print(str(testData) + "--->" + str(classify(testData,tree)))
+for row in data.values:
+    testData = row[0:-1] #use first row without the label as testdata
+    print(str(testData) + "--->" + str(classify(testData,tree)))    
 
 print("done!")
