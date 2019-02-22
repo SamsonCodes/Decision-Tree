@@ -30,6 +30,13 @@ data = pd.DataFrame(data = Golf, columns = ["Outlook","Temp","Humidity","Windy",
 targetIndex = 4
 targetCategories = [0,1]
 
+testData = []
+for x1 in range(0,3):
+    for x2 in range(0,3):
+        for x3 in range(0,2):
+            for x4 in range(0,2):
+                testData.append([x1,x2,x3,x4])
+
 # From random-forest/tutorial: Decision tree from scratch
 def class_counts(rows):
     """Counts the number of each type of example in a dataset."""
@@ -46,7 +53,7 @@ def class_counts(rows):
 class Leaf:
     # This is the constructor
     def __init__(self, rows):
-        self.predictions = class_counts(rows)
+        self.predictions = class_counts(rows) # a dictionary of label -> count.
         
 # This is the Node class
 class Node:
@@ -209,7 +216,7 @@ def print_tree(node, spacing=""):
 
     # Call this function recursively on the false branch
     print (spacing + '--> False:')
-    print_tree(node.falseBranch, spacing + "  ")
+    print_tree(node.falseBranch, spacing + "  ")    
 
 # Adapted from random-forest/tutorial: Decision tree from scratch    
 def classify(row, node):
@@ -226,15 +233,16 @@ def classify(row, node):
         return classify(row, node.falseBranch)
 
 #MAIN PROGRAM
-print("running!")
+print("running! \n")
 print("Data head:")
 print(data.head())
-print("\n")
 
+print("\nTree:")
 tree = buildTree(data.values)
 print_tree(tree)
-for row in data.values:
-    testData = row[0:-1] #use first row without the label as testdata
-    print(str(testData) + "--->" + str(classify(testData,tree)))    
+
+print("\nPredictions:{label->count}")
+for row in testData:
+    print(str(row) + "--->" + str(classify(row,tree)))    
 
 print("done!")
