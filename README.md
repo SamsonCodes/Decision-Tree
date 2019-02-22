@@ -1,2 +1,2 @@
 # Decision-Tree
-A custom implementation of decision trees in Python.
+A custom implementation of a decision tree in Python.
